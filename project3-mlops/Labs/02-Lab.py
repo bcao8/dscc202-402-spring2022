@@ -163,6 +163,7 @@ with mlflow.start_run(run_name= "RF-Grid-2-Search") as run:
   mlflow.log_metric("mse", mse)
   
   runID = run.info.run_uuid
+  experimentID = run.info.experiment_id
   print("Inside MLflow Run with id {}".format(runID))
 
 # COMMAND ----------
