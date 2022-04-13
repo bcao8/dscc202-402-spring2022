@@ -66,7 +66,7 @@ entry_points:
   main:
     parameters:
       data_path: {type: str, default: "/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv"}
-      bootstrap: {type: boo, default: True}
+      bootstrap: {type: bool, default: True}
       min_impurity_decrease: {type: float, default: 0}
     command: "python train.py --data_path {data_path} --bootstrap {bootstrap} --min_impurity_decrease {min_impurity_decrease}"
 '''.strip())
@@ -123,7 +123,7 @@ from sklearn.model_selection import train_test_split
 
 @click.command()
 @click.option("--data_path", default="/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv", type=str)
-@click.option("--bootstrap", default=True, type=boo)
+@click.option("--bootstrap", default=True, type=bool)
 @click.option("--min_impurity_decrease", default=0, type=float)
 def mlflow_rf(data_path, bootstrap, min_impurity_decrease):
 

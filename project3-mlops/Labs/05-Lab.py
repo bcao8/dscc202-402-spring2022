@@ -94,17 +94,19 @@ rf2 = RandomForestRegressor(n_estimators=100, max_depth=25)
 
 # pre-process train data
 X_train_processed = X_train.copy()
-X_train_processed["trunc_lat"] = #FILL_IN
-X_train_processed["trunc_long"] = #FILL_IN
-X_train_processed["review_scores_sum"] = #FILL_IN
-X_train_processed = X_train_processed.drop(FILL_IN, axis=1)
+X_train_processed["trunc_lat"] = df["latitude"].round(2)
+X_train_processed["trunc_long"] = df["longitude"].round(2)
+X_train_processed["review_scores_sum"] = df["review_scores_accuracy"]+df["review_scores_cleanliness"]+df["review_scores_checkin"]
++df["review_scores_communication"]+df["review_scores_location"]
+X_train_processed = X_train_processed.drop(["latitude", "longitude"], axis=1)
 
 # pre-process test data to obtain MSE
 X_test_processed = X_test.copy()
-X_test_processed["trunc_lat"] = #FILL_IN
-X_test_processed["trunc_long"] = #FILL_IN
-X_test_processed["review_scores_sum"] = #FILL_IN
-X_test_processed = X_test_processed.drop(FILL_IN, axis=1)
+X_test_processed["trunc_lat"] = df["latitude"].round(2)
+X_test_processed["trunc_long"] = df["longitude"].round(2)
+X_test_processed["review_scores_sum"] = df["review_scores_accuracy"]+df["review_scores_cleanliness"]+df["review_scores_checkin"]
++df["review_scores_communication"]+df["review_scores_location"]
+X_test_processed = X_test_processed.drop(["latitude", "longitude"], axis=1)
 
 
 # fit and evaluate new rf model
