@@ -65,7 +65,8 @@ display(airbnbDF)
 
 # COMMAND ----------
 
-# TODO
+airbnbDF_preprocessed = airbnbDF.copy()
+airbnbDF_preprocessed["price"] = airbnbDF_preprocessed["price"].replace('[\$,]', '', regex=True). astype(float)
 
 # COMMAND ----------
 
@@ -76,7 +77,15 @@ display(airbnbDF)
 
 # COMMAND ----------
 
-# TODO
+# The neighbourhood and zip code seem to be repetitive since we already have the longitude and latitude. 
+# The host_total_listings_count is also not very informative, because consumers are more likely to look at whether the host is a superhost instead of their listings.
+# The property_type is also not an important factor that we would like to look into. We already have the room_type, which tells us basic information of whether the airbnb is a whole apartment or is shared with the host.
+# Therefore, we droped these five columns from our dataframe.
+airbnbDF_preprocessed.drop(["neighbourhood_cleansed", "zipcode", "property_type", "host_total_listings_count"], axis=1, inplace=True)
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -87,6 +96,21 @@ display(airbnbDF)
 # COMMAND ----------
 
 # TODO
+airbnbDF_preprocessed = airbnbDF_preprocessed.fillna(airbnbDF_preprocessed.mean()).round(1)
+airbnbDF_preprocessed["latitude_truc"] = airbnbDF_preprocessed["latitude"].round(2)
+airbnbDF_preprocessed["longitude_truc"] = airbnbDF_preprocessed["longitude"].round(2)
+airbnbDF_preprocessed["host_is_superhost"] = airbnbDF_preprocessed["host_is_superhost"].astype('category')
+airbnbDF_preprocessed["host_is_superhost"] = airbnbDF_preprocessed["host_is_superhost"].cat.codes
+airbnbDF_preprocessed["cancellation_policy"] = airbnbDF_preprocessed["cancellation_policy"].astype('category')
+airbnbDF_preprocessed["cancellation_policy"] = airbnbDF_preprocessed["cancellation_policy"].cat.codes
+airbnbDF_preprocessed["instant_bookable"] = airbnbDF_preprocessed["instant_bookable"].astype('category')
+airbnbDF_preprocessed["instant_bookable"] = airbnbDF_preprocessed["instant_bookable"].cat.codes
+airbnbDF_preprocessed["room_type"] = airbnbDF_preprocessed["room_type"].astype('category')
+airbnbDF_preprocessed["room_type"] = airbnbDF_preprocessed["room_type"].cat.codes
+airbnbDF_preprocessed["bed_type"] = airbnbDF_preprocessed["bed_type"].astype('category')
+airbnbDF_preprocessed["bed_type"] = airbnbDF_preprocessed["bed_type"].cat.codes
+
+display(airbnbDF_preprocessed)
 
 # COMMAND ----------
 
@@ -99,7 +123,7 @@ display(airbnbDF)
 
 # TODO
 from sklearn.model_selection import train_test_split
-
+X_train, X_test, y_train, y_test = train_test_split(airbnbDF_preprocessed.drop(["price"], axis=1), airbnbDF_preprocessed[["price"]].values.ravel(), random_state=42)
 
 # COMMAND ----------
 
@@ -119,6 +143,12 @@ from sklearn.model_selection import train_test_split
 # COMMAND ----------
 
 # TODO
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+rf = RandomForestRegressor(n_estimators=100, max_depth=25)
+rf.fit(X_train, y_train)
+
 
 # COMMAND ----------
 
@@ -128,6 +158,8 @@ from sklearn.model_selection import train_test_split
 # COMMAND ----------
 
 # TODO
+rf_mse = mean_squared_error(y_test, rf.predict(X_test))
+rf_mse
 
 # COMMAND ----------
 
