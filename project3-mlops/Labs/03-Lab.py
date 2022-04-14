@@ -67,7 +67,7 @@ entry_points:
     parameters:
       data_path: {type: str, default: "/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv"}
       bootstrap: {type: bool, default: True}
-      min_impurity_decrease: {type: float, default: 0}
+      min_impurity_decrease: {type: float, default: 0.}
     command: "python train.py --data_path {data_path} --bootstrap {bootstrap} --min_impurity_decrease {min_impurity_decrease}"
 '''.strip())
 
@@ -94,12 +94,12 @@ name: Lab-03
 channels:
   - defaults
 dependencies:
-  - cloudpickle=0.5.3
-  - numpy=1.14.3
-  - pandas=0.23.0
-  - scikit-learn=0.19.1
+  - cloudpickle=1.6.0
+  - numpy=1.19.2
+  - pandas=1.2.4
+  - scikit-learn=0.24.1
   - pip:
-    - mlflow==1.0.0
+    - mlflow==1.20.2
 '''.strip())
 
 # COMMAND ----------
@@ -124,7 +124,7 @@ from sklearn.model_selection import train_test_split
 @click.command()
 @click.option("--data_path", default="/dbfs/mnt/training/airbnb/sf-listings/airbnb-cleaned-mlflow.csv", type=str)
 @click.option("--bootstrap", default=True, type=bool)
-@click.option("--min_impurity_decrease", default=0, type=float)
+@click.option("--min_impurity_decrease", default=0., type=float)
 def mlflow_rf(data_path, bootstrap, min_impurity_decrease):
 
   with mlflow.start_run() as run:

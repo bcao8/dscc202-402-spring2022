@@ -146,7 +146,7 @@ X_train, X_test, y_train, y_test = train_test_split(airbnbDF_preprocessed.drop([
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-rf = RandomForestRegressor(n_estimators=100, max_depth=25)
+rf = RandomForestRegressor(n_estimators=100, max_depth=5)
 rf.fit(X_train, y_train)
 
 
