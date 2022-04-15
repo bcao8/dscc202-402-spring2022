@@ -317,6 +317,8 @@ print(pd.read_csv(demo_prediction_path))
 # COMMAND ----------
 
 # test_data_path
+prediction_path
+# final_model_path
 
 # COMMAND ----------
 
@@ -335,11 +337,14 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-      data_path: {type: str, default: "/dbfs/user/bcao8@u.rochester.edu/mlflow/99_putting_it_all_together_psp/test_data.csv"}
-      n_estimators: {type: int, default: 100}
-      max_depth: {type: int, default: 5}
-    command:  "python predict.py-- data_path {data_path} --n_estimators {n_estimators} --max_depth {max_depth}"
+      test_data_path: {type: str, default: "/dbfs/user/bcao8@u.rochester.edu/mlflow/99_putting_it_all_together_psp/test_data.csv"}
+      final_model_path: {type: str, default: "/dbfs/user/bcao8@u.rochester.edu/mlflow/99_putting_it_all_together_psp/final-model3"}
+      prediction_path: {type:str, default: "/dbfs/user/bcao8@u.rochester.edu/mlflow/99_putting_it_all_together_psp/predictions.csv"}
+    command:  "python predict.py --test_data_path {test_data_path} --final_model_path {final_model_path} --prediction_path {prediction_path}"
 '''.strip(), overwrite=True)
+
+# n_estimators: {type: int, default: 100}
+# max_depth: {type: int, default: 5}
 
 # COMMAND ----------
 
@@ -433,9 +438,9 @@ second_prediction_path = f"{working_path}/predictions-2.csv"
 
 mlflow.projects.run(working_path,
     parameters={
-        "data_path": test_data_path,
-        "n_estimators": 1000,
-        "max_depth": 4
+        "test_data_path": test_data_path,
+        "prediction_path": second_prediction_path,
+        "final_model_path": final_model_path
     }
 )
 
