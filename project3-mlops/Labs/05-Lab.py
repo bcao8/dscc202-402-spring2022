@@ -210,8 +210,8 @@ class RF_with_preprocess(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # Construct and save the model
-model_path =  f"{workingDir}/RF_with_preprocess12/"
-dbutils.fs.rm(model_path, True) # remove folder if already exists
+model_path =  f"{workingDir}/RF_with_preprocess/"
+dbutils.fs.rm(model_path.replace("dbfs:", "/dbfs"), True) # remove folder if already exists
 
 rf_preprocess_model = RF_with_preprocess(trained_rf = rf2)
 mlflow.pyfunc.save_model(path=model_path.replace("dbfs:", "/dbfs"), python_model=rf_preprocess_model)

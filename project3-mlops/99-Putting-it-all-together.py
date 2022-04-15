@@ -85,10 +85,6 @@ airbnbDF_preprocessed.drop(["neighbourhood_cleansed", "zipcode", "property_type"
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC For the string columns that you've decided to keep, pick a numerical encoding for the string columns. Don't forget to deal with the `NaN` entries in those columns first.
@@ -97,8 +93,8 @@ airbnbDF_preprocessed.drop(["neighbourhood_cleansed", "zipcode", "property_type"
 
 # TODO
 airbnbDF_preprocessed = airbnbDF_preprocessed.fillna(airbnbDF_preprocessed.mean()).round(1)
-airbnbDF_preprocessed["latitude_truc"] = airbnbDF_preprocessed["latitude"].round(2)
-airbnbDF_preprocessed["longitude_truc"] = airbnbDF_preprocessed["longitude"].round(2)
+airbnbDF_preprocessed["latitude"] = airbnbDF_preprocessed["latitude"].round(2)
+airbnbDF_preprocessed["longitude"] = airbnbDF_preprocessed["longitude"].round(2)
 airbnbDF_preprocessed["host_is_superhost"] = airbnbDF_preprocessed["host_is_superhost"].astype('category')
 airbnbDF_preprocessed["host_is_superhost"] = airbnbDF_preprocessed["host_is_superhost"].cat.codes
 airbnbDF_preprocessed["cancellation_policy"] = airbnbDF_preprocessed["cancellation_policy"].astype('category')
@@ -146,9 +142,8 @@ X_train, X_test, y_train, y_test = train_test_split(airbnbDF_preprocessed.drop([
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-rf = RandomForestRegressor(n_estimators=100, max_depth=5)
+rf = RandomForestRegressor(n_estimators=1000, max_depth=4)
 rf.fit(X_train, y_train)
-
 
 # COMMAND ----------
 
@@ -171,7 +166,23 @@ rf_mse
 
 # TODO
 import mlflow.sklearn
+n_estimators=1000
+max_depth=4
 
+mlflow.end_run()
+
+with mlflow.start_run() as run:
+    # Log model
+    rf = RandomForestRegressor(n_estimators = n_estimators, max_depth = max_depth)
+    rf.fit(X_train, y_train)
+    mlflow.sklearn.log_model(rf, "random-forest-model")
+
+    # Log parameters
+    mlflow.log_param("n_estimators", n_estimators)
+    mlflow.log_param("max_depth", max_depth)
+
+    # Log metrics
+    mlflow.log_metric("mse", mean_squared_error(y_test, rf.predict(X_test)))
 
 # COMMAND ----------
 
@@ -189,6 +200,8 @@ import mlflow.sklearn
 
 # TODO
 import mlflow.pyfunc
+rf_path = "dbfs:/databricks/mlflow-tracking/3510852684870429/a9cbc14bee274ae0b4d56fb41c53707b/artifacts/random-forest-model"
+rf_pyfunc_model = mlflow.pyfunc.load_pyfunc(rf_path)
 
 # COMMAND ----------
 
@@ -214,7 +227,7 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
         self.model = model
     
     def predict(self, context, model_input):
-        # FILL_IN
+        return self.model.predict(model_input) / model_input["accommodates"]
 
 
 # COMMAND ----------
@@ -225,9 +238,11 @@ class Airbnb_Model(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # TODO
-final_model_path =  f"{working_path}/final-model"
+final_model_path =  f"{working_path}/final-model3"
 
-# FILL_IN
+dbutils.fs.rm(rf_path.replace("dbfs:", "/dbfs"), True)
+rf_preprocess_model = Airbnb_Model(rf_pyfunc_model)
+mlflow.pyfunc.save_model(path=final_model_path.replace("dbfs:", "/dbfs"), python_model=rf_preprocess_model)
 
 # COMMAND ----------
 
@@ -237,6 +252,8 @@ final_model_path =  f"{working_path}/final-model"
 # COMMAND ----------
 
 # TODO
+loaded_preprocess_model = mlflow.pyfunc.load_pyfunc(final_model_path.replace("dbfs:", "/dbfs"))
+Prediction = loaded_preprocess_model.predict(X_test)
 
 # COMMAND ----------
 
@@ -255,11 +272,11 @@ final_model_path =  f"{working_path}/final-model"
 # COMMAND ----------
 
 # TODO
-save the testing data 
 test_data_path = f"{working_path}/test_data.csv"
 # FILL_IN
-
+X_test.to_csv(test_data_path, index=False)
 prediction_path = f"{working_path}/predictions.csv"
+Prediction.to_csv(prediction_path, index=False)
 
 # COMMAND ----------
 
@@ -280,8 +297,9 @@ import pandas as pd
 @click.option("--test_data_path", default="", type=str)
 @click.option("--prediction_path", default="", type=str)
 def model_predict(final_model_path, test_data_path, prediction_path):
-    # FILL_IN
-
+    loaded_preprocess_model = mlflow.pyfunc.load_pyfunc(final_model_path.replace("dbfs:", "/dbfs"))
+    Prediction = loaded_preprocess_model.predict(pd.read_csv(test_data_path))
+    Prediction.to_csv(prediction_path, index=False)
 
 # test model_predict function    
 demo_prediction_path = f"{working_path}/predictions.csv"
@@ -295,6 +313,10 @@ result = runner.invoke(model_predict, ['--final_model_path', final_model_path,
 assert result.exit_code == 0, "Code failed" # Check to see that it worked
 print("Price per person predictions: ")
 print(pd.read_csv(demo_prediction_path))
+
+# COMMAND ----------
+
+# test_data_path
 
 # COMMAND ----------
 
@@ -313,8 +335,10 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-      #FILL_IN
-    command:  "python predict.py #FILL_IN"
+      data_path: {type: str, default: "/dbfs/user/bcao8@u.rochester.edu/mlflow/99_putting_it_all_together_psp/test_data.csv"}
+      n_estimators: {type: int, default: 100}
+      max_depth: {type: int, default: 5}
+    command:  "python predict.py-- data_path {data_path} --n_estimators {n_estimators} --max_depth {max_depth}"
 '''.strip(), overwrite=True)
 
 # COMMAND ----------
@@ -369,6 +393,14 @@ import mlflow.pyfunc
 import pandas as pd
 
 # put model_predict function with decorators here
+@click.command()
+@click.option("--final_model_path", default="", type=str)
+@click.option("--test_data_path", default="", type=str)
+@click.option("--prediction_path", default="", type=str)
+def model_predict(final_model_path, test_data_path, prediction_path):
+    loaded_preprocess_model = mlflow.pyfunc.load_pyfunc(final_model_path.replace("dbfs:", "/dbfs"))
+    Prediction = loaded_preprocess_model.predict(pd.read_csv(test_data_path))
+    Prediction.to_csv(prediction_path, index=False)
     
 if __name__ == "__main__":
   model_predict()
@@ -398,8 +430,13 @@ display( dbutils.fs.ls(workingDir) )
 
 # TODO
 second_prediction_path = f"{working_path}/predictions-2.csv"
+
 mlflow.projects.run(working_path,
-   # FILL_IN
+    parameters={
+        "data_path": test_data_path,
+        "n_estimators": 1000,
+        "max_depth": 4
+    }
 )
 
 # COMMAND ----------
