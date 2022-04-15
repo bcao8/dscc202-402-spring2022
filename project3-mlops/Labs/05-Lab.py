@@ -278,6 +278,7 @@ class RF_with_postprocess(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # Construct and save the model
+# Comments: I added the number in the link because the remove function did not work for some reason
 model_path =  f"{workingDir}/RF_with_postprocess13/"
 
 dbutils.fs.rm(model_path, True) # remove folder if already exists
